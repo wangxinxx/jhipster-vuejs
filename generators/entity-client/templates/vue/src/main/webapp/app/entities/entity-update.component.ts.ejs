@@ -5,16 +5,17 @@ import { Component,<% if (!fieldsContainBlob) { %> Vue,<% } %> Inject } from 'vu
 <% } %>
 import { numeric, required, minLength, maxLength } from 'vuelidate/lib/validators';
 <%_
-    let include = false;
+    let dateFnsIncluded = false;
     for (idx in fields) {
-    const fieldName = fields[ idx ].fieldName;
-    const fieldType = fields[idx].fieldType;
-    if ([ 'Instant', 'ZonedDateTime' ].includes(fieldType) && !include) {
-        include = true;
-        _%>
+        const fieldName = fields[ idx ].fieldName;
+        const fieldType = fields[idx].fieldType;
+        if ([ 'Instant', 'ZonedDateTime' ].includes(fieldType) && !dateFnsIncluded) {
+            dateFnsIncluded = true;
+_%>
 import format from 'date-fns/format';
-import parse from 'date-fns/parse'
-import { DATE_TIME_LONG_FORMAT, INSTANT_FORMAT, ZONED_DATE_TIME_FORMAT } from '@/shared/date/filters';
+import parse from 'date-fns/parse';
+import parseISO from 'date-fns/parseISO';
+import { DATE_TIME_LONG_FORMAT } from '@/shared/date/filters';
     <%_ } } _%>
 
 <%_
@@ -29,7 +30,7 @@ import { DATE_TIME_LONG_FORMAT, INSTANT_FORMAT, ZONED_DATE_TIME_FORMAT } from '@
       hasManyToMany = true;
     }
 _%>
-  <% if (otherEntityAngularName === 'User' && authenticationType !== "oauth2") { %>
+  <% if (otherEntityAngularName === 'User' && authenticationType !== 'oauth2') { %>
 import UserService from '@/admin/user-management/user-management.service';
   <% } else if (otherEntityAngularName !== 'User' && !importEntitiesSeen.includes(otherEntityAngularName)) { %>
 import <%= otherEntityAngularName %>Service from '../<%= otherEntityFolderName %>/<%= otherEntityFileName %>.service';
@@ -57,13 +58,21 @@ const validations: any = {
     <%_ if (fields[idx].fieldValidateRules.includes('maxlength')) { _%>
       maxLength: maxLength(<%= fields[idx].fieldValidateRulesMaxlength %>),
     <%_ } _%>
-    <%_ if (['Integer', 'Long', 'Float', 'Double', 'BigDecimal'].includes(fieldType)) { _%>
+    <%_ if (['Integer', 'Long', 'Float', 'Double', 'BigDecimal', 'Duration'].includes(fieldType)) { _%>
     numeric
     <%_ } _%>
 
     <%_ } _%>
     },
     <%_ } _%>
+    <%_
+    for (idx in relationships) {
+      if (relationships[idx].relationshipValidate === true) { _%>
+    <%= relationships[idx].relationshipFieldName %><%_ if (dto !== 'no') { _%>Id<%_ } _%>: {
+      required
+    },
+    <%_ } _%>
+  <%_ } _%>
   }
 };
 
@@ -72,7 +81,7 @@ const validations: any = {
 })
 export default class <%= entityAngularName %>Update extends <% if (fieldsContainBlob) { %>mixins(JhiDataUtils)<% } else { %>Vue<% } %> {
   @Inject('alertService') private alertService: () => AlertService;
-  @Inject('<%= entityInstance %>Service') private <%= entityInstance %>Service : () => <%= entityAngularName %>Service;
+  @Inject('<%= entityInstance %>Service') private <%= entityInstance %>Service: () => <%= entityAngularName %>Service;
   public <%= entityInstance %>: I<%= entityAngularName %> = new <%= entityAngularName %>();
   <%_
     const entitiesSeen = [entityAngularName];
@@ -83,7 +92,7 @@ export default class <%= entityAngularName %>Update extends <% if (fieldsContain
     if (!(otherEntityAngularName === 'User' && authenticationType === "oauth2")) {
   _%>
   <%_ if (!entitiesSeen.includes(otherEntityAngularName)) { %>
-  @Inject('<%= otherEntityName %>Service') private <%= otherEntityName %>Service : () => <%= otherEntityAngularName %>Service;
+  @Inject('<%= otherEntityName %>Service') private <%= otherEntityName %>Service: () => <%= otherEntityAngularName %>Service;
   <%_ } _%>
   <%_ if (!entitiesSeen.includes(otherEntityNamePlural)) { %>
   public <%= otherEntityNamePlural %> : <% if (otherEntityAngularName === 'User') { %>Array<any><%_ } else { _%>I<%= otherEntityAngularName %>[]<%_ } _%> = [];
@@ -147,13 +156,13 @@ export default class <%= entityAngularName %>Update extends <% if (fieldsContain
   }
 
   <%_
-    let included = false;
+    let dateFunctionIncluded = false;
     for (idx in fields) {
-    const fieldName = fields[ idx ].fieldName;
-    const fieldType = fields[idx].fieldType;
-    if ([ 'Instant', 'ZonedDateTime' ].includes(fieldType) && !included) {
-        included = true;
-        _%>
+        const fieldName = fields[ idx ].fieldName;
+        const fieldType = fields[idx].fieldType;
+        if ([ 'Instant', 'ZonedDateTime' ].includes(fieldType) && !dateFunctionIncluded) {
+            dateFunctionIncluded = true;
+  _%>
     public convertDateTimeFromServer(date: Date): string {
       if (date) {
         return format(date, DATE_TIME_LONG_FORMAT);
@@ -180,6 +189,14 @@ export default class <%= entityAngularName %>Update extends <% if (fieldsContain
 
   public retrieve<%= entityAngularName %>(<%= entityInstance %>Id) : void {
     this.<%= entityInstance %>Service().find(<%= entityInstance %>Id).then((res) => {
+<%_
+        for (idx in fields) {
+            const fieldName = fields[idx].fieldName;
+            const fieldType = fields[idx].fieldType;
+            if ([ 'Instant', 'ZonedDateTime' ].includes(fieldType)) {
+_%>
+      res.<%= fieldName %> = new Date(res.<%= fieldName %>);
+<%_ } } _%>
       this.<%= entityInstance %> = res;
     });
   }

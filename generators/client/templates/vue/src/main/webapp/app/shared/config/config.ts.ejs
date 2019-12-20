@@ -22,7 +22,7 @@ import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart';
 import { faList } from '@fortawesome/free-solid-svg-icons/faList';
 import { faTasks } from '@fortawesome/free-solid-svg-icons/faTasks';
 import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
-import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
 import { faSignInAlt } from '@fortawesome/free-solid-svg-icons/faSignInAlt';
 import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons/faSignOutAlt';
 import { faThList } from '@fortawesome/free-solid-svg-icons/faThList';
@@ -44,6 +44,17 @@ import Vuelidate from 'vuelidate';
 import Vue2Filters from 'vue2-filters';
 
 import * as filters from '@/shared/date/filters';
+import { accountStore } from '@/shared/config/store/account-store';
+import { alertStore } from '@/shared/config/store/alert-store';
+<%_ if (enableTranslation) { _%>
+import { translationStore } from '@/shared/config/store/translation-store';
+<%_ } _%>
+
+<%_ if (enableTranslation) { _%>
+const dateTimeFormats = {
+  // jhipster-needle-i18n-language-date-time-format - JHipster will add/remove format options in this object
+}
+<%_ } _%>
 
 export function initVueApp(vue) {
   vue.use(VueCookie);
@@ -71,7 +82,7 @@ export function initFortAwesome(vue) {
     faTasks,
     faBook,
     faHdd,
-    faClock,
+    faLock,
     faSignInAlt,
     faSignOutAlt,
     faWrench,
@@ -94,6 +105,7 @@ export function initFortAwesome(vue) {
 export function initI18N(vue) {
   vue.use(VueI18n);
   return new VueI18n({
+    dateTimeFormats,
     silentTranslationWarn: true,
     formatter: new <%=jhiPrefixCapitalized%>Formatter()
   });
@@ -103,80 +115,12 @@ export function initI18N(vue) {
 export function initVueXStore(vue) {
   vue.use(Vuex);
   return new Vuex.Store({
-    state: {
-      dismissSecs: 0,
-      dismissCountDown: 0,
-      alertType: '',
-      alertMessage: {},
-      logon: false,
-      userIdentity: null,
-      authenticated: false,
-      ribbonOnProfiles: '',
-      activeProfiles: '',
+    modules: {
+      accountStore,
+      alertStore,
       <%_ if (enableTranslation) { _%>
-      currentLanguage: '<%= nativeLanguage %>',
-      languages: {
-        // jhipster-needle-i18n-language-key-pipe - JHipster will add/remove languages in this object
-      }
+      translationStore,
       <%_ } _%>
     },
-    mutations: {
-      initAlert(state) {
-        state.dismissSecs = 0;
-        state.dismissCountDown = 0;
-        state.alertType = '';
-        state.alertMessage = {};
-      },
-      setAlertType(state, alertType) {
-        state.alertType = alertType;
-      },
-      setAlertMessage(state, alertMessage) {
-        state.dismissSecs = 5;
-        state.dismissCountDown = 5;
-        state.alertMessage = alertMessage;
-      },
-      countDownChanged(state, newCountDown) {
-        state.dismissCountDown = newCountDown;
-      },
-      <%_ if (enableTranslation) { _%>
-      currentLanguage(state, newLanguage) {
-        state.currentLanguage = newLanguage;
-      },
-      <%_ } _%>
-      authenticate(state) {
-        state.logon = true;
-      },
-      authenticated(state, identity) {
-        state.userIdentity = identity;
-        state.authenticated = true;
-        state.logon = false;
-      },
-      logout(state) {
-        state.userIdentity = null;
-        state.authenticated = false;
-        state.logon = false;
-      },
-      setActiveProfiles(state, profile) {
-        state.activeProfiles = profile;
-      },
-      setRibbonOnProfiles(state, ribbon) {
-        state.ribbonOnProfiles = ribbon;
-      }
-    },
-    getters: {
-      dismissSecs: state => state.dismissSecs,
-      dismissCountDown: state => state.dismissCountDown,
-      alertType: state => state.alertType,
-      alertMessage: state => state.alertMessage,
-      <%_ if (enableTranslation) { _%>
-      currentLanguage: state => state.currentLanguage,
-      languages: state => state.languages,
-      <%_ } _%>
-      logon: state => state.logon,
-      account: state => state.userIdentity,
-      authenticated: state => state.authenticated,
-      activeProfiles: state => state.activeProfiles,
-      ribbonOnProfiles: state => state.ribbonOnProfiles
-    }
   });
 }

@@ -5,7 +5,6 @@ const config = require('../config');
 const merge = require('webpack-merge');
 const path = require('path');
 const baseWebpackConfig = require('./webpack.common');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin');
 const portfinder = require('portfinder');
 const jhiUtils = require('./utils.js');
@@ -21,41 +20,39 @@ module.exports = merge(baseWebpackConfig, {
   // cheap-module-eval-source-map is faster for development
   devtool: config.dev.devtool,
   entry: {
-    <%_ if (useSass) { _%>
     global: './<%= MAIN_SRC_DIR %>content/scss/global.scss',
-    <%_ } else { _%>
-    global: './<%= MAIN_SRC_DIR %>content/css/global.css',
-    <%_ } _%>
     main: './<%= MAIN_SRC_DIR %>app/main'
   },
   output: {
-    path: jhiUtils.root('<%= BUILD_DIR %>www'),
+    path: jhiUtils.root('<%= DIST_DIR %>'),
     filename: 'app/[name].bundle.js',
     chunkFilename: 'app/[id].chunk.js'
   },
   devServer: {
-    contentBase: './<%= BUILD_DIR %>www',
+    contentBase: './<%= DIST_DIR %>',
     port: 9060,
     proxy: [
       {
         context: [
-          /* jhipster-needle-add-entity-to-webpack - JHipster will add entity api paths here */
           '/api',
+          '/services',
           '/management',
           '/swagger-resources',
           '/v2/api-docs',
           '/h2-console',<% if (authenticationType === 'oauth2') { %>
+          '/oauth2',
           '/login',<% } %>
           '/auth'
         ],
-        target: 'http://127.0.0.1:8080',
+        target: 'http://127.0.0.1:<%= serverPort %>',
         secure: false,
         headers: { host: 'localhost:9000' }
       }
     ],
     watchOptions: {
       ignored: /node_modules/
-    }
+    },
+    historyApiFallback: true
   },
   plugins: [
     new webpack.DefinePlugin({
@@ -80,13 +77,6 @@ module.exports = merge(baseWebpackConfig, {
       {
         reload: false
       }
-    ),
-    // https://github.com/ampedandwired/html-webpack-plugin
-    new HtmlWebpackPlugin({
-      template: 'src/main/webapp/index.html',
-      chunks: ['vendors', 'main', 'global'],
-      chunksSortMode: 'manual',
-      inject: true
-    })
+    )
   ]
 });

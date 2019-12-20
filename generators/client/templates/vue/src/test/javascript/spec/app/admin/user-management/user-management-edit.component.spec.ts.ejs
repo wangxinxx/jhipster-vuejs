@@ -1,3 +1,6 @@
+<%_
+const tsKeyId = generateTestEntityId(pkType);
+_%>
 import { shallowMount, createLocalVue, Wrapper } from '@vue/test-utils';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -58,14 +61,15 @@ describe('UserManagementEdit Component', () => {
       mockedAxios.get.mockReturnValue(Promise.resolve({}));
 
       // WHEN
-      userManagementEdit.init(1);
+      userManagementEdit.init(<%- tsKeyId %>);
       await userManagementEdit.$nextTick();
 
       // THEN
-      expect(mockedAxios.get).toHaveBeenCalledWith(`api/users/1`);
+      expect(mockedAxios.get).toHaveBeenCalledWith('api/users/' + <%- tsKeyId %>);
     });
   });
 
+<%_ if (databaseType === 'sql' || databaseType === 'mongodb' || databaseType === 'couchbase') { _%>
   describe('initAuthorities', () => {
     it('Should load authorities', async () => {
       // GIVEN
@@ -80,18 +84,19 @@ describe('UserManagementEdit Component', () => {
     });
   });
 
+<%_ } _%>
   describe('save', () => {
     it('Should call update service on save for existing user', async () => {
       // GIVEN
       mockedAxios.put.mockReturnValue(Promise.resolve({ headers: {} }));
-      userManagementEdit.userAccount = { id: 1, authorities: [] };
+      userManagementEdit.userAccount = { id: <%- tsKeyId %>, authorities: [] };
 
       // WHEN
       userManagementEdit.save();
       await userManagementEdit.$nextTick();
 
       // THEN
-      expect(mockedAxios.put).toHaveBeenCalledWith(`api/users`, { id: 1, authorities: [] });
+      expect(mockedAxios.put).toHaveBeenCalledWith(`api/users`, { id: <%- tsKeyId %>, authorities: [] });
       expect(userManagementEdit.isSaving).toEqual(false);
     });
 

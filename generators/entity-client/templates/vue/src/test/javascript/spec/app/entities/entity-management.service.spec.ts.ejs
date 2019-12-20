@@ -17,7 +17,7 @@
  limitations under the License.
 -%>
 <%_
-const tsKeyId = generateTestEntityId(pkType, prodDatabaseType);
+const tsKeyId = generateTestEntityId(pkType);
 _%>
 /* tslint:disable max-line-length */
 import axios from 'axios';
@@ -60,7 +60,7 @@ describe('Service Tests', () => {
       <%_ } _%>
 
       elemDefault = new <%= entityAngularName %>(
-        <%_ if (pkType === 'String') { _%>
+        <%_ if (pkType === 'String'  || pkType === 'UUID') { _%>
         'ID',
         <%_ } else { _%>
         0,
@@ -71,7 +71,7 @@ describe('Service Tests', () => {
         <%= fieldType + '.' + field.fieldValues.split(',')[0] %>,
             <%_ } else if (fieldType === 'Boolean') { _%>
         false,
-            <%_ } else if (['Integer', 'Long', 'Float', 'Double', 'BigDecimal'].includes(fieldType)) { _%>
+            <%_ } else if (['Integer', 'Long', 'Float', 'Double', 'BigDecimal', 'Duration'].includes(fieldType)) { _%>
         0,
             <%_ } else if (fieldType === 'String' || fieldType === 'UUID') { _%>
         'AAAAAAA',
@@ -87,7 +87,7 @@ describe('Service Tests', () => {
       );
     });
 
-    describe('Service methods', async () => {
+    describe('Service methods', () => {
       it('should find an element', async () => {
         const returnedFromService = Object.assign({
 <%_ fields.forEach((field) => {
@@ -101,15 +101,15 @@ describe('Service Tests', () => {
         }, elemDefault);
         mockedAxios.get.mockReturnValue(Promise.resolve({ data: returnedFromService }));
 
-        service
+        return service
           .find(<%- tsKeyId %>).then((res) => {
             expect(res).toMatchObject(elemDefault);
         });
       });
-
+<%_ if (!readOnly) { _%>
       it('should create a <%= entityAngularName %>', async () => {
         const returnedFromService = Object.assign({
-  <%_ if (pkType === 'String') { _%>
+  <%_ if (pkType === 'String'  || pkType === 'UUID') { _%>
           id: 'ID',
   <%_ } else { _%>
           id: 0,
@@ -135,7 +135,7 @@ describe('Service Tests', () => {
           }, returnedFromService);
 
           mockedAxios.post.mockReturnValue(Promise.resolve({ data: returnedFromService }));
-          service.create({}).then((res) => {
+          return service.create({}).then((res) => {
             expect(res).toMatchObject(expected);
         });
       });
@@ -146,7 +146,7 @@ describe('Service Tests', () => {
       const fieldType = field.fieldType; _%>
       <%_ if (fieldType === 'Boolean') { _%>
           <%= field.fieldName%>: true,
-      <%_ } else if (['Integer', 'Long', 'Float', 'Double', 'BigDecimal'].includes(fieldType)) { _%>
+      <%_ } else if (['Integer', 'Long', 'Float', 'Double', 'BigDecimal', 'Duration'].includes(fieldType)) { _%>
           <%= field.fieldName%>: 1,
       <%_ } else if (fieldType === 'String' || fieldType === 'UUID') { _%>
           <%= field.fieldName%>: 'BBBBBB',
@@ -172,18 +172,18 @@ describe('Service Tests', () => {
           }, returnedFromService);
           mockedAxios.put.mockReturnValue(Promise.resolve({ data: returnedFromService }));
 
-          service.update(expected).then((res) => {
+          return service.update(expected).then((res) => {
             expect(res).toMatchObject(expected);
         });
       });
-
+<%_ } _%>
       it('should return a list of <%= entityAngularName %>', async () => {
         const returnedFromService = Object.assign({
     <%_ fields.forEach((field) => {
         const fieldType = field.fieldType; _%>
         <%_ if (fieldType === 'Boolean') { _%>
           <%= field.fieldName%>: true,
-        <%_ } else if (['Integer', 'Long', 'Float', 'Double', 'BigDecimal'].includes(fieldType)) { _%>
+        <%_ } else if (['Integer', 'Long', 'Float', 'Double', 'BigDecimal', 'Duration'].includes(fieldType)) { _%>
           <%= field.fieldName%>: 1,
         <%_ } else if (fieldType === 'String' || fieldType === 'UUID') { _%>
           <%= field.fieldName%>: 'BBBBBB',
@@ -207,17 +207,18 @@ describe('Service Tests', () => {
     <%_ }) _%>
         }, returnedFromService);
         mockedAxios.get.mockReturnValue(Promise.resolve([returnedFromService]));
-        service.retrieve(<% if (pagination !== 'no') { %>expected<% } %>).then((res) => {
+        return service.retrieve(<% if (pagination !== 'no') { %>{ sort: {}, page: 0, size: 10 }<% } %>).then((res) => {
           expect(res).toContainEqual(expected);
         });
       });
-
+<%_ if (!readOnly) { _%>
       it('should delete a <%= entityAngularName %>', async () => {
           mockedAxios.delete.mockReturnValue(Promise.resolve({ok: true}));
-          service.delete(<%- tsKeyId %>).then((res) => {
-              expect(res.ok);
+          return service.delete(<%- tsKeyId %>).then((res) => {
+              expect(res.ok).toBeTruthy();
           });
       });
+<%_ } _%>
     });
   });
 });

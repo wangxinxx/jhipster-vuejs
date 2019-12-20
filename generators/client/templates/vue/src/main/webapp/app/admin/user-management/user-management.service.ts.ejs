@@ -4,8 +4,8 @@ import buildPaginationQueryOpts from '@/shared/sort/sorts';
 
 export default class UserManagementService {
 
-  public get(login): Promise<any> {
-    return axios.get(`api/users/${login}`);
+  public get(userId: <% if (pkType === 'String'  || pkType === 'UUID') { %>string<% } else { %>number<% } %>): Promise<any> {
+    return axios.get(`api/users/${userId}`);
   }
 
   public create(user): Promise<any> {
@@ -16,19 +16,19 @@ export default class UserManagementService {
     return axios.put('api/users', user);
   }
 
-  public remove(userId): Promise<any> {
+  public remove(userId: <% if (pkType === 'String'  || pkType === 'UUID') { %>string<% } else { %>number<% } %>): Promise<any> {
     return axios.delete(`api/users/${userId}`);
   }
 
-  public retrieve(req?: any): Promise<any> {
-    return axios.get(`api/users?${buildPaginationQueryOpts(req)}`);
+  public retrieve(<%_ if (databaseType === 'sql' || databaseType === 'mongodb' || databaseType === 'couchbase') { _%>req?: any <%_ } _%>): Promise<any> {
+    return axios.get(`api/users<%_ if (databaseType === 'sql' || databaseType === 'mongodb' || databaseType === 'couchbase') { _%>?${buildPaginationQueryOpts(req)}<%_ } _%>`);
   }
 
   public retrieveAuthorities(): Promise<any> {
     <%_ if (databaseType === 'sql' || databaseType === 'mongodb' || databaseType === 'couchbase') { _%>
     return axios.get('<%- apiUaaPath %>api/users/authorities');
     <%_ } else { _%>
-    return of(['ROLE_USER', 'ROLE_ADMIN']);
+    return Promise.resolve(['ROLE_USER', 'ROLE_ADMIN']);
     <%_ } _%>
   }
 }

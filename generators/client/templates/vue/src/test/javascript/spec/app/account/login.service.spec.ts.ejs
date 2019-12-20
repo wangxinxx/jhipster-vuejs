@@ -21,15 +21,15 @@ describe('Login Service test suite', () => {
 
     loginService.login(loc);
 
-    expect(loc.href).toBe('//localhost/login');
+    expect(loc.href).toBe('//localhost/oauth2/authorization/oidc');
   });
 
   it('should build url for login behind client proxy', () => {
-    const loc = {href: '', port: '8080', hostname: 'localhost', pathname: '/'};
+    const loc = {href: '', port: '<%= serverPort %>', hostname: 'localhost', pathname: '/'};
 
     loginService.login(loc);
 
-    expect(loc.href).toBe('//localhost:8080/login');
+    expect(loc.href).toBe('//localhost:<%= serverPort %>/oauth2/authorization/oidc');
   });
   <%_ } _%>
 

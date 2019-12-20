@@ -13,6 +13,7 @@ const CLIENT_WEBPACK_DIR = constants.CLIENT_WEBPACK_DIR;
 const expectedFiles = {
     i18n: [
         `${CLIENT_MAIN_SRC_DIR}app/locale/translation.service.ts`,
+        `${CLIENT_MAIN_SRC_DIR}app/shared/config/store/translation-store.ts`,
         `${CLIENT_MAIN_SRC_DIR}i18n/en/activate.json`,
         `${CLIENT_MAIN_SRC_DIR}i18n/en/audits.json`,
         `${CLIENT_MAIN_SRC_DIR}i18n/en/configuration.json`,
@@ -168,6 +169,8 @@ const expectedFiles = {
         `${CLIENT_MAIN_SRC_DIR}app/shared/date/filters.ts`,
         `${CLIENT_MAIN_SRC_DIR}app/shared/config/config.ts`,
         `${CLIENT_MAIN_SRC_DIR}app/shared/config/config-bootstrap-vue.ts`,
+        `${CLIENT_MAIN_SRC_DIR}app/shared/config/store/account-store.ts`,
+        `${CLIENT_MAIN_SRC_DIR}app/shared/config/store/alert-store.ts`,
         `${CLIENT_MAIN_SRC_DIR}app/shared/jhi-item-count.vue`,
         `${CLIENT_MAIN_SRC_DIR}app/shared/jhi-item-count.component.ts`,
         `${CLIENT_MAIN_SRC_DIR}app/shared/model/user.model.ts`,
@@ -176,7 +179,9 @@ const expectedFiles = {
         `${CLIENT_MAIN_SRC_DIR}app/app.vue`,
         `${CLIENT_MAIN_SRC_DIR}app/constants.ts`,
         `${CLIENT_MAIN_SRC_DIR}app/main.ts`,
-        `${CLIENT_MAIN_SRC_DIR}app/shims-vue.d.ts`
+        `${CLIENT_MAIN_SRC_DIR}app/shims-vue.d.ts`,
+
+        `${CLIENT_MAIN_SRC_DIR}WEB-INF/web.xml`
     ],
 
     websocket: [
@@ -195,7 +200,7 @@ const expectedFiles = {
     protractor: [
         `${CLIENT_TEST_SRC_DIR}e2e/modules/account/account.spec.ts`,
         `${CLIENT_TEST_SRC_DIR}e2e/modules/administration/administration.spec.ts`,
-        `${CLIENT_TEST_SRC_DIR}e2e/page-objects/base-component.ts`,
+        `${CLIENT_TEST_SRC_DIR}e2e/page-objects/alert-page.ts`,
         `${CLIENT_TEST_SRC_DIR}e2e/page-objects/navbar-page.ts`,
         `${CLIENT_TEST_SRC_DIR}e2e/page-objects/password-page.ts`,
         `${CLIENT_TEST_SRC_DIR}e2e/page-objects/register-page.ts`,
@@ -425,6 +430,75 @@ describe('Vue.js JHipster blueprint', () => {
             assert.noFileContent('src/main/webapp/content/scss/vendor.scss', '@import \'~bootswatch/dist/');
         });
     });
+    describe('noi18n with OAuth2 Maven', () => {
+        before((done) => {
+            helpers
+                .run('generator-jhipster/generators/app')
+                .withOptions({
+                    'from-cli': true,
+                    skipInstall: true,
+                    blueprint: 'vuejs',
+                    skipChecks: true
+                })
+                .withGenerators([
+                    [
+                        require('../generators/client/index.js'), // eslint-disable-line global-require
+                        'jhipster-vuejs:client',
+                        path.join(__dirname, '../generators/client/index.js')
+                    ],
+                    [
+                        require('../generators/common/index.js'), // eslint-disable-line global-require
+                        'jhipster-vuejs:common',
+                        path.join(__dirname, '../generators/common/index.js')
+                    ]
+                ])
+                .withPrompts({
+                    baseName: 'sampleMysql',
+                    packageName: 'com.mycompany.myapp',
+                    applicationType: 'monolith',
+                    databaseType: 'sql',
+                    devDatabaseType: 'h2Disk',
+                    prodDatabaseType: 'mysql',
+                    cacheProvider: 'ehcache',
+                    authenticationType: 'oauth2',
+                    enableTranslation: false,
+                    nativeLanguage: 'en',
+                    buildTool: 'maven',
+                    clientFramework: 'Vue.js',
+                    clientTheme: 'none'
+                })
+                .on('end', done);
+        });
+        it('creates expected files from jhipster vue.js generator', () => {
+            assert.noFile(expectedFiles.i18n);
+            assert.file(expectedFiles.common);
+            assert.file(expectedFiles.app);
+            assert.file(expectedFiles.test);
+            assert.file([`${CLIENT_SPEC_SRC_DIR}app/account/login.service.spec.ts`]);
+            assert.noFile(expectedFiles.protractor);
+            assert.noFile(expectedFiles.allAuthExceptOAuth2);
+            assert.noFile(expectedFiles.session);
+            assert.file(expectedFiles.webpack);
+        });
+        it('contains the specific change added by the blueprint', () => {
+            assert.fileContent('package.json', `"generator-jhipster-vuejs": "${blueprintPackagejs.version}"`);
+            assert.fileContent('package.json', '"vue"');
+            assert.fileContent('package.json', '"vuex"');
+            assert.fileContent('package.json', '"vuelidate"');
+            assert.fileContent('.prettierrc', 'tabWidth: 2');
+            assert.fileContent('.editorconfig', '[*.{ts,tsx,js,json,css,scss,sql,ejs}]\n'
+                + 'indent_style = space\n'
+                + 'indent_size = 2');
+        });
+        it('uses correct prettier formatting', () => {
+            // tabWidth = 2 (see generators/common/templates/.prettierrc.ejs)
+            assert.fileContent('webpack/webpack.dev.js', / {2}devtool:/);
+            assert.fileContent('tsconfig.json', / {2}"compilerOptions":/);
+        });
+        it('uses default JHipster theme', () => {
+            assert.noFileContent('src/main/webapp/content/scss/vendor.scss', '@import \'~bootswatch/dist/');
+        });
+    });
     describe('Elasticsearch and Protractor', () => {
         before((done) => {
             helpers
@@ -521,7 +595,7 @@ describe('Vue.js JHipster blueprint', () => {
                 ])
                 .withPrompts({
                     baseName: 'sampleWebsocket',
-                    packageName: 'io.github.jhipster',
+                    packageName: 'io.github.jhipster.sample',
                     applicationType: 'monolith',
                     databaseType: 'sql',
                     devDatabaseType: 'h2Disk',

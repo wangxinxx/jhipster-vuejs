@@ -16,59 +16,42 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -%>
-import { element, by, ElementFinder } from 'protractor';
+import {by, element, ElementArrayFinder, ElementFinder} from 'protractor';
 
-import { waitUntilCount, waitUntilDisplayed } from '<% if (clientRootFolder && !skipUiGrouping) { %>../<% } %>../../util/utils';
+import AlertPage from '<% if (clientRootFolder && !skipUiGrouping) { %>../<% } %>../../page-objects/alert-page';
 
-export default class <%= entityClass %>ComponentsPage {
-  createButton: ElementFinder = element(by.id('jh-create-entity'));
-  detailButtons = element.all(by.css('.btn-info.details'));
-  editButtons = element.all(by.css('.btn-primary.edit'));
-  deleteButtons = element.all(by.css('div table .btn-danger'));
+export default class <%= entityClass %>ComponentsPage extends AlertPage {
+
   title: ElementFinder = element(by.id('<%= entityFileName %>-heading'));
 
-  async clickOnCreateButton() {
-    await this.createButton.click();
+  footer: ElementFinder = element(by.id('footer'));
+<%_ if (!readOnly) { _%>
+  createButton: ElementFinder = element(by.id('jh-create-entity'));
+<%_ } _%>
+
+  noRecords: ElementFinder = element(by.css('#page-heading ~ div.alert.alert-warning'));
+  table: ElementFinder = element(by.css('#page-heading ~ div.table-responsive > table'));
+
+  records: ElementArrayFinder= this.table.all(by.css('tbody tr'));
+
+  getDetailsButton(record: ElementFinder) {
+    return record.element(by.css('.btn-info.details'));
+  }
+<%_ if (!readOnly) { _%>
+  getEditButton(record: ElementFinder) {
+    return record.element(by.css('.btn-primary.edit'));
   }
 
-  async clickOnFirstDetailsButton() {
-    await this.detailButtons.first().click();
+  getDeleteButton(record: ElementFinder) {
+    return record.element(by.css('div table .btn-danger'));
   }
-
-  async clickOnFirstEditButton() {
-    await this.editButtons.first().click();
-  }
-
-  async clickOnLastDeleteButton() {
-    await this.deleteButtons.last().click();
-  }
-
-  async countDeleteButtons() {
-    return this.deleteButtons.count();
-  }
-
-  getTitle() {
-    return this.title;
-  }
-
-  async waitUntilLoaded() {
-    await waitUntilDisplayed(this.deleteButtons.first());
-  }
-
-  async waitUntilDeleteButtonsLength(length) {
-    await waitUntilCount(this.deleteButtons, length);
-  }
+<%_ } _%>
 }
 
 export class <%= entityClass %>DeleteDialog {
-  private dialogTitle: ElementFinder = element(by.id('<%= i18nKeyPrefix %>.delete.question'));
-  private confirmButton = element(by.id('<%= jhiPrefixDashed %>-confirm-delete-<%= entityInstance %>'));
-
-  getDialogTitle() {
-    return this.dialogTitle;
-  }
-
-  async clickOnConfirmButton() {
-    await this.confirmButton.click();
-  }
+  dialog: ElementFinder = element(by.id('removeEntity'));
+  title: ElementFinder = element(by.id('<%= i18nKeyPrefix %>.delete.question'));
+<%_ if (!readOnly) { _%>
+  confirmButton: ElementFinder = element(by.id('<%= jhiPrefixDashed %>-confirm-delete-<%= entityInstance %>'));
+<%_ } _%>
 }
